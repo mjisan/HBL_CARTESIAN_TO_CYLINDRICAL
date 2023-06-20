@@ -1,0 +1,52 @@
+#Calcualte the advective terms from HBL output (under development)
+#Time = 36 H Level = 2
+import numpy as np
+import xarray as xr
+import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+
+# Set the global font to be bold
+plt.rcParams["font.weight"] = "bold"
+
+# Open the dataset and perform the calculation
+ds = xr.open_dataset('../boundary_model_axi_30min_fric.nc')
+wind = ds['um'].sel(t=36, z=1)
+dx = 1000
+du_dx = wind.differentiate(coord="x", edge_order=2) / dx
+
+# Define your x and y data for the contour plot
+x = np.linspace(-600, 600, du_dx.shape[1])
+y = np.linspace(-600, 600, du_dx.shape[0])
+
+fig, ax = plt.subplots(figsize=(3.415, 3.415))
+
+new_min = -0.001
+new_max = 0.0004
+level_spacing = 0.0001
+levels = np.arange(new_min, new_max, level_spacing)
+cmap = plt.get_cmap('bwr') 
+
+# Perform the contour plot
+contour_plot = ax.contourf(x, y, du_dx.values, levels=levels, cmap=cmap)
+
+# Add a colorbar
+cbar = fig.colorbar(contour_plot, ax=ax, pad=0.01)
+cbar.set_label('m/s', rotation=90, labelpad=15)
+
+# Set the font to Times-Bold
+font_path = '/home/mjisan/anaconda3/fonts/timesbd.ttf'
+font_prop = fm.FontProperties(fname=font_path, size=6)
+
+ax.tick_params(axis='both', which='major', labelsize=6)
+cbar.ax.tick_params(labelsize=6)
+
+# Set the limits of the plot to the limits of your data
+ax.set_xlim([-150, 150])
+ax.set_ylim([-150, 150])
+
+# Set labels and title
+ax.set_xlabel('X', fontproperties=font_prop)
+ax.set_ylabel('Y', fontproperties=font_prop)
+ax.set_title('du/dx [diag; Level 2]', fontproperties=font_prop)
+
+plt.savefig('dudx_hbl_36.png', dpi=300)
